@@ -1,5 +1,5 @@
 import unittest
-from statistics_service import StatisticsService
+from statistics_service import StatisticsService, SortBy
 from player import Player
 
 class PlayerReaderStub:
@@ -34,9 +34,16 @@ class TestStatisticsService(unittest.TestCase):
         self.assertEqual(self.stats.team(team_name)[0].team, team_name)
 
     def test_top_players_are_in_right_order(self):
-        top_list = self.stats.top(2)
-        print(top_list)
+        top_list = self.stats.top(3)
         self.assertEqual(
             list(map(lambda player: player.points, top_list)),
             [124, 99, 98]
         )
+    
+    def test_top_sorts_by_goals(self):
+        top_list = self.stats.top(1, SortBy.GOALS)
+        self.assertEqual(top_list[0].goals, 45) 
+
+    def test_top_sorts_by_assists(self):
+        top_list = self.stats.top(1, SortBy.ASSISTS)
+        self.assertEqual(top_list[0].assists, 89) 
