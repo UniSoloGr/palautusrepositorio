@@ -21,14 +21,16 @@ class PlayerStats:
     def __init__(self, reader):
         self.reader = reader
         self.players = []
-        for player_dict in self.reader:
+        for player_dict in self.reader.response:
             player = Player(player_dict)
             self.players.append(player)
 
 
-    def top_scorers_by_nationality(nationality):
-        players = filter(lambda x: x.nationality == nationality, self.players).sort(
-            key = lambda x: x.goals + x.assists, reverse=True
+    def top_scorers_by_nationality(self, nationality):
+        players = sorted(
+            (player for player in self.players if player.nationality == nationality),
+            key=lambda player: player.goals + player.assists,
+            reverse=True,
         )
         return players
         
