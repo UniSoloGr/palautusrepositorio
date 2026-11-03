@@ -34,3 +34,9 @@ class PlayerStats:
         )
         return players
         
+    def list_of_nationalities(self):
+        return sorted(list(
+            set(map(
+                lambda x: x.nationality, self.players
+            ))
+        ))
