@@ -1,6 +1,7 @@
 import requests
 
-class Player:
+
+class Player: # pylint: disable=too-few-public-methods
     def __init__(self, player_data):
         self.name = player_data['name']
         self.nationality = player_data['nationality']
@@ -9,13 +10,16 @@ class Player:
         self.team = player_data['team']
         self.games = player_data['games']
         self.id = player_data['id']
-    
-    def __str__(self):
-        return f"{self.name:20} {self.team:15} {self.goals:2} + {self.assists:2} = {self.goals + self.assists}"
 
-class PlayerReader:
+    def __str__(self):
+        points = self.goals + self.assists
+        return f"{self.name:20} {self.team:15} {self.goals:2} + {self.assists:2} = {points:2}"
+
+
+class PlayerReader: # pylint: disable=too-few-public-methods
     def __init__(self, url):
-        self.response = requests.get(url).json()
+        self.response = requests.get(url, timeout=10).json()
+
 
 class PlayerStats:
     def __init__(self, reader):
@@ -25,7 +29,6 @@ class PlayerStats:
             player = Player(player_dict)
             self.players.append(player)
 
-
     def top_scorers_by_nationality(self, nationality):
         players = sorted(
             (player for player in self.players if player.nationality == nationality),
@@ -33,7 +36,7 @@ class PlayerStats:
             reverse=True,
         )
         return players
-        
+
     def list_of_nationalities(self):
         return sorted(list(
             set(map(

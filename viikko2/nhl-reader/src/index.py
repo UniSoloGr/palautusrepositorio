@@ -1,11 +1,13 @@
-from player import Player, PlayerReader, PlayerStats
 from rich.console import Console
 from rich.text import Text
 from rich.table import Table
 
+from player import Player, PlayerReader, PlayerStats
+
 console = Console()
 
-def pretty_input(prefix, item_list, default = ""):
+
+def pretty_input(prefix, item_list, default=""):
 
     text = Text()
     text.append(f"{prefix} ", style="white")
@@ -18,8 +20,9 @@ def pretty_input(prefix, item_list, default = ""):
     console.print(text, end=" ")
     user_input = console.input()
     if user_input not in item_list:
-        user_input = default 
+        user_input = default
     return user_input
+
 
 def print_players(players: list[Player], season: str, nationality: str):
 
@@ -48,7 +51,7 @@ def print_players(players: list[Player], season: str, nationality: str):
         )
 
     console.print(table)
-     
+
 
 def main():
     seasons = {
@@ -68,7 +71,9 @@ def main():
     nationalities = stats.list_of_nationalities()
     while True:
         nationality = pretty_input("Nationality", nationalities)
-        print_players(stats.top_scorers_by_nationality(nationality), season, nationality)
+        print_players(stats.top_scorers_by_nationality(
+            nationality), season, nationality)
+
 
 if __name__ == "__main__":
     main()
