@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, ANY, call
 from kauppa import Kauppa
 from tuote import Tuote
 
@@ -41,14 +41,11 @@ class TestKauppa(unittest.TestCase):
         self.kauppa.lisaa_koriin(1)
         self.kauppa.tilimaksu("pekka", "12345")
 
-        # varmistetaan, että metodia tilisiirto on kutsuttu
         self.pankki_mock.tilisiirto.assert_called()
-        # toistaiseksi ei välitetä kutsuun liittyvistä argumenteista
 
     def test_maksaessa_ostos_pankin_metodia_tilisiirto_kutsutaan_oikeilla_parametreilla(self):
         asiakas = "pekka"
         tilinro = "12345"
-        # tehdään ostokset
         self.kauppa.aloita_asiointi()
         self.kauppa.lisaa_koriin(1)
         self.kauppa.tilimaksu(asiakas, tilinro)
@@ -64,7 +61,6 @@ class TestKauppa(unittest.TestCase):
     def test_maksaessa_ostoksia_pankin_metodia_tilisiirto_kutsutaan_oikeilla_parametreilla(self):
         asiakas = "pekka"
         tilinro = "12345"
-        # tehdään ostokset
         self.kauppa.aloita_asiointi()
         self.kauppa.lisaa_koriin(1)
         self.kauppa.lisaa_koriin(2)
@@ -75,7 +71,6 @@ class TestKauppa(unittest.TestCase):
     def test_maksaessa_kahta_samaa_tuotetta_pankin_metodia_tilisiirto_kutsutaan_oikeilla_parametreilla(self):
         asiakas = "pekka"
         tilinro = "12345"
-        # tehdään ostokset
         self.kauppa.aloita_asiointi()
         self.kauppa.lisaa_koriin(1)
         self.kauppa.lisaa_koriin(1)
@@ -94,10 +89,61 @@ class TestKauppa(unittest.TestCase):
 
         asiakas = "pekka"
         tilinro = "12345"
-        # tehdään ostokset
         self.kauppa.aloita_asiointi()
         self.kauppa.lisaa_koriin(1)
         self.kauppa.lisaa_koriin(2)
         self.kauppa.tilimaksu(asiakas, tilinro)
 
         self.pankki_mock.tilisiirto.assert_called_with(asiakas, 42, tilinro, "33333-44455", 5)
+
+    def test_aloita_asiointi_nollaa_edellisen_ostoksen_tiedot(self):
+        asiakas = "pekka"
+        tilinro = "12345"
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.tilimaksu(asiakas, tilinro)
+
+        asiakas = "joki"
+        tilinro = "54321"
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.tilimaksu(asiakas, tilinro)
+
+        self.assertEqual(
+            self.pankki_mock.tilisiirto.call_args_list,
+            [
+                call(ANY, ANY, ANY, ANY, 10),
+                call(ANY, ANY, ANY, ANY, 15)
+            ]
+        )
+
+    def test_kauppa_pyytää_uuden_tilinumeron(self):
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.tilimaksu("asiakas1", "001")
+
+        self.viitegeneraattori_mock.uusi.return_value = 43
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.tilimaksu("asiakas2", "002")
+
+        self.assertEqual(
+            self.pankki_mock.tilisiirto.call_args_list,
+            [
+                call(ANY, 42, ANY, ANY, ANY),
+                call(ANY, 43, ANY, ANY, ANY)
+            ]
+        )
+    
+    def test_kauppa_poistaa_tuotteen_korista(self):
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.poista_korista(1)
+        self.kauppa.tilimaksu("asiakas1", "001")
+
+        self.pankki_mock.tilisiirto.assert_called_with("asiakas1", 42, "001", "33333-44455", 0)
